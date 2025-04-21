@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Temporal Workflow Analysis</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        margin: 20px;
+        text-align: center;
+      }
+      h1 {
+        margin-bottom: 20px;
+        color: #333;
+      }
+      textarea {
+        width: 80%;
+        max-width: 600px; /* Limit the width of the textarea */
+        height: 200px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        margin-bottom: 20px;
+        display: block; /* Make it a block element */
+        margin-left: auto;
+        margin-right: auto;
+        font-family: monospace; /* Use a monospace font for JSON */
+        font-size: 14px;
+        background-color: #f8f8f8; /* Light background for textarea */
+        box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); /* Subtle shadow */
+        resize: vertical; /* Allow vertical resizing */
+      }
+      textarea:focus {
+        outline: none; /* Remove default outline on focus */
+        border-color: #007BFF; /* Change border color on focus */
+        box-shadow: 0 0 0 3px rgba(0,123,255,0.1); /* Add a focus shadow */
+      }
+      input[type="submit"] {
+        background-color: #007BFF; /* Use a more modern blue */
+        color: white;
+        padding: 12px 25px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s ease; /* Smooth transition */
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Add a shadow */
+      }
+      input[type="submit"]:hover {
+        background-color: #0056b3; /* Darker blue on hover */
+      }
+      input[type="submit"]:focus {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(0,123,255,0.3);
+      }
+      .error {
+        color: #DC3545; /* Use a standard error color */
+        margin-bottom: 10px;
+        font-size: 16px;
+        font-weight: bold;
+      }
+      #gemini_response {
+        margin-top: 20px;
+        padding: 15px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        background-color: #f5f5f5;
+        text-align: left;
+        white-space: pre-wrap; /* Preserve newlines */
+        font-family: sans-serif;
+        font-size: 16px;
+        margin-bottom: 20px;
+        width: 80%;
+        margin-left: auto;
+        margin-right: auto;
+        max-width: 600px;
+      }
+      #clear_button {
+        background-color: #f44336;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        margin-top: 10px;
+        transition: background-color 0.3s ease;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        width: 100px;
+        text-align: center;
+      }
+      #clear_button:hover {
+        background-color: #d32f2f;
+      }
+    </style>
+    <script>
+      function validateForm() {
+        let jsonInput = document.forms["jsonForm"]["json_data"].value;
+        if (jsonInput === "") {
+          alert("Please paste JSON content into the edit box.");
+          return false; // Prevent form submission
+        }
+        return true; // Allow form submission
+      }
+
+      function clearTextarea() {
+        document.forms["jsonForm"]["json_data"].value = "";
+        document.getElementById("gemini_response").innerHTML = "";
+      }
+    </script>
+</head>
+<body>
+    <h1>Temporal Workflow Analysis</h1>
+    {% if gemini_response %}
+        <div id="gemini_response">
+            <strong>Gemini Response:</strong>
+            {{ gemini_response }}
+        </div>
+    {% endif %}
+    {% if error_message %}
+        <p class="error">{{ error_message }}</p>
+    {% endif %}
+    <form method="POST" name="jsonForm" onsubmit="return validateForm();">
+        <textarea name="json_data">{% if previous_json_data %}{{ previous_json_data }}{% endif %}</textarea><br>
+        <input type="submit" value="Submit">
+    </form>
+    <button id="clear_button" onclick="clearTextarea()">Clear</button>
+
+</body>
+</html>
