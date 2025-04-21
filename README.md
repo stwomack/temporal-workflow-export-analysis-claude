@@ -40,3 +40,9 @@ poetry run python app.py
 Then navigate to http://127.0.0.1:500
 
 Copy/Paste an existing workflow history after downloading it from the Temporal UI
+
+<img src="images/before.png">
+
+After submitting the JSON, you will see something similar to this:
+
+<img src="images/after.png">
