@@ -14,46 +14,46 @@
       }
       textarea {
         width: 80%;
-        max-width: 600px; /* Limit the width of the textarea */
+        max-width: 600px;
         height: 200px;
         padding: 10px;
         border: 1px solid #ccc;
         border-radius: 5px;
         margin-bottom: 20px;
-        display: block; /* Make it a block element */
+        display: block;
         margin-left: auto;
         margin-right: auto;
-        font-family: monospace; /* Use a monospace font for JSON */
+        font-family: monospace;
         font-size: 14px;
-        background-color: #f8f8f8; /* Light background for textarea */
-        box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); /* Subtle shadow */
-        resize: vertical; /* Allow vertical resizing */
+        background-color: #f8f8f8;
+        box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+        resize: vertical;
       }
       textarea:focus {
-        outline: none; /* Remove default outline on focus */
-        border-color: #007BFF; /* Change border color on focus */
-        box-shadow: 0 0 0 3px rgba(0,123,255,0.1); /* Add a focus shadow */
+        outline: none;
+        border-color: #007BFF;
+        box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
       }
       input[type="submit"] {
-        background-color: #007BFF; /* Use a more modern blue */
+        background-color: #007BFF;
         color: white;
         padding: 12px 25px;
         border: none;
         border-radius: 5px;
         cursor: pointer;
         font-size: 16px;
-        transition: background-color 0.3s ease; /* Smooth transition */
-        box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Add a shadow */
+        transition: background-color 0.3s ease;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
       }
       input[type="submit"]:hover {
-        background-color: #0056b3; /* Darker blue on hover */
+        background-color: #0056b3;
       }
       input[type="submit"]:focus {
         outline: none;
         box-shadow: 0 0 0 3px rgba(0,123,255,0.3);
       }
       .error {
-        color: #DC3545; /* Use a standard error color */
+        color: #DC3545;
         margin-bottom: 10px;
         font-size: 16px;
         font-weight: bold;
@@ -65,7 +65,7 @@
         border-radius: 5px;
         background-color: #f5f5f5;
         text-align: left;
-        white-space: pre-wrap; /* Preserve newlines */
+        white-space: pre-wrap;
         font-family: sans-serif;
         font-size: 16px;
         margin-bottom: 20px;
@@ -93,20 +93,78 @@
       #clear_button:hover {
         background-color: #d32f2f;
       }
+      input[type="file"] {
+        margin-top: 20px;
+        margin-bottom: 20px;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        width: 80%;
+        max-width: 600px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        background-color: #fff;
+      }
+      input[type="file"]:focus {
+        outline: none;
+        border-color: #007BFF;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+      }
+      #process_another {
+        background-color: #28a745;
+        color: white;
+        padding: 12px 25px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 16px;
+        margin-top: 20px;
+        transition: background-color 0.3s ease;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+        width: 150px;
+        text-align: center;
+      }
+      #process_another:hover {
+        background-color: #218838;
+      }
+      #input_container {
+        display: block;
+      }
     </style>
     <script>
       function validateForm() {
         let jsonInput = document.forms["jsonForm"]["json_data"].value;
-        if (jsonInput === "") {
-          alert("Please paste JSON content into the edit box.");
-          return false; // Prevent form submission
+        let jsonFile = document.forms["jsonForm"]["json_file"].value;
+        if (jsonInput === "" && jsonFile === "") {
+          alert("Please paste JSON content into the text area or upload a .json file.");
+          return false;
         }
-        return true; // Allow form submission
+        return true;
       }
 
       function clearTextarea() {
         document.forms["jsonForm"]["json_data"].value = "";
         document.getElementById("gemini_response").innerHTML = "";
+        document.forms["jsonForm"]["json_file"].value = "";
+        document.getElementById("input_container").style.display = "block";
+        document.getElementById("clear_button").style.display = "inline-block";
+        document.getElementById("submit_button").style.display = "inline-block";
+        document.getElementById("process_another").style.display = "none";
+      }
+
+      function showInputs() {
+        document.getElementById("input_container").style.display = "block";
+        document.getElementById("process_another").style.display = "none";
+        document.getElementById("gemini_response").innerHTML = "";
+        document.getElementById("clear_button").style.display = "inline-block";
+        document.getElementById("submit_button").style.display = "inline-block";
+      }
+
+      function reloadPage() {
+        window.location.href = "/";
       }
     </script>
 </head>
@@ -114,18 +172,21 @@
     <h1>Temporal Workflow Analysis</h1>
     {% if gemini_response %}
         <div id="gemini_response">
-            <strong>Gemini Response:</strong>
-            {{ gemini_response }}
+            <strong>Workflow Analysis</strong>
+            {{ gemini_response | safe }}
         </div>
     {% endif %}
     {% if error_message %}
-        <p class="error">{{ error_message }}</p>
+        <p class="error">Error: {{ error_message }}</p>
     {% endif %}
-    <form method="POST" name="jsonForm" onsubmit="return validateForm();">
-        <textarea name="json_data">{% if previous_json_data %}{{ previous_json_data }}{% endif %}</textarea><br>
-        <input type="submit" value="Submit">
-    </form>
-    <button id="clear_button" onclick="clearTextarea()">Clear</button>
-
+    <div id="input_container" style="display: {% if show_inputs %} block {% else %} none {% endif %};">
+        <form method="POST" name="jsonForm" onsubmit="return validateForm();" enctype="multipart/form-data">
+            <textarea name="json_data">{% if previous_json_data %}{{ previous_json_data }}{% endif %}</textarea><br>
+            <input type="file" name="file" accept=".json,.proto"><br>
+            <input type="submit" value="Submit">
+        </form>
+        <button id="clear_button" onclick="clearTextarea()">Clear</button>
+    </div>
+    <button id="process_another" onclick="reloadPage()" style="display: {% if show_inputs %} none {% else %} block {% endif %}">Process Another</button>
 </body>
 </html>

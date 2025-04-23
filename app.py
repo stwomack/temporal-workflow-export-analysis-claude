@@ -1,8 +1,11 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request
 import google.generativeai as genai
-import os
+import os, tempfile
 from dotenv import load_dotenv
 import json # Import the json module
+from werkzeug.utils import secure_filename
+from process_history_file import protobuf_to_json
+
 
 app = Flask(__name__)
 load_dotenv()  # Load environment variables from .env
@@ -19,13 +22,19 @@ except KeyError:
     #  see an error if they try to submit data.
     model = None # Set model to None to prevent errors later.
 
+# Define allowed file types
+ALLOWED_EXTENSIONS = {'json','proto'}
 
-def generate_gemini_response(json_data):
+def allowed_file(filename):
+    """Checks if the file extension is allowed."""
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+def generate_gemini_response(data):
     """
     Generates a response from the Gemini API based on the provided JSON data.
 
     Args:
-        json_data (str): The JSON data submitted by the user.
+        data (str): The data submitted by the user.
 
     Returns:
         str: The response from the Gemini API, or an error message.
@@ -53,7 +62,7 @@ def generate_gemini_response(json_data):
         Report the Workflow Status. Regardless of the status, please also report any other anomalies in the workflow history and provide guidance as stated above.
 
         Here is the Workflow Export in JSON Format:
-        {json_data}
+        {data}
         """
     try:
         response = model.generate_content(prompt)
@@ -79,14 +88,32 @@ def index():
     """
     if request.method == 'POST':
         json_data = request.form['json_data']
+        uploaded_file = request.files['file']
         gemini_response = ""
+
         if json_data:
             gemini_response = generate_gemini_response(json_data)
-            return render_template('index.html', gemini_response=gemini_response, previous_json_data=json_data)
+            return render_template('index.html', gemini_response=gemini_response, previous_json_data=json_data, show_inputs=False)
+        elif uploaded_file and allowed_file(uploaded_file.filename):
+            filename = secure_filename(uploaded_file.filename)
+            # Create a temporary file. The file is automatically deleted
+            # when the block exits
+            with tempfile.NamedTemporaryFile(delete=True) as temp_file:
+                uploaded_file.save(temp_file.name)
+                temp_file.seek(0)
+                if filename.endswith('.json'):
+                    file_contents = temp_file.read().decode('utf-8')
+                else:
+                    print(f"reading protobuf contents {temp_file.name}")
+                    file_contents = protobuf_to_json(temp_file.name)
+
+            gemini_response = generate_gemini_response(file_contents)
+            return render_template('index.html', gemini_response=gemini_response, show_inputs=False)
         else:
-            error_message = "Please paste JSON content into the edit box."
-            return render_template('index.html', error=error_message)
-    return render_template('index.html')
+            error_message = "Please paste JSON content into the text area or upload a .json or .proto file."
+            print(f"An error occurred: {error_message}")
+            return render_template('index.html', error_message=error_message, show_inputs=True)
+    return render_template('index.html', show_inputs=True)
 
 if __name__ == '__main__':
     app.run(debug=True)
