@@ -17,9 +17,6 @@ try:
     model = "claude-3-haiku-20240307"  # Using Claude 3 Haiku as a default model (fast and cost-effective)
 except KeyError:
     print("Error: ANTHROPIC_API_KEY is not set in the .env file. The application may not function correctly.")
-    #  Consider logging this error. You might also want to disable the Claude functionality
-    #  if the API key is missing. For now, we'll let the app run, and the user will
-    #  see an error if they try to submit data.
     client = None  # Set client to None to prevent errors later.
 
 # Define allowed file types
